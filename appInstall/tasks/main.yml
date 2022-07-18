@@ -1,75 +1,44 @@
 ---
+
 - name: Create a directory if it does not exist
   ansible.builtin.file:
-    path: "{{ node_apps_location }}"
+    path: "{{ go_app_location }}"
     state: directory
     mode: '0755'
 
-- name: Git checkout
-  ansible.builtin.git:
-    repo: "{{ git_repo }}"
-    dest: "{{ node_apps_location }}"
-    clone: yes
-
-- name: java folder exists.
-  file: 
-    path: /usr/java
-    state: directory
-
-- name: Copy example go jdk to server.
-  copy: 
-    src: jdk-8u202-linux-x64.tar.gz
-    dest: /usr/java
+- name: Download jre
+  ansible.builtin.get_url:
+    url: https://nexusrm.easlab.co.uk/repository/eas-hosted-bin/example-jar.tar.gz
+    dest: "{{ go_app_location }}/example-jar.tar.gz"
+    mode: '0777'
 
 - name: unzip jar
   ansible.builtin.command:
-    cmd: tar -xf jdk-8u202-linux-x64.tar.gz
-    chdir: /usr/java
+    cmd: tar -xf example-jar.tar.gz
+    chdir: {{ go_app_location }}
+    mode: '0777'
 
-- name: gradle folder exists.
-  file: 
-    path: /usr/gradle
-    state: directory
+- name: make java-hello-app.service
+  blockinfile:
 
-- name: Copy example go gradle to server.
-  copy: 
-    src: gradle-7.5-all.zip
-    dest: /usr/gradle
-
-
-- name: Install unzip
-  apt:
-    name: unzip
-    state: present
-  register: apt_action
-  retries: 100
-  until: apt_action is success or ('Failed to lock apt for exclusive operation' not in apt_action.msg and '/var/lib/dpkg/lock' not in apt_action.msg)
-
-- name: unzip gradle
-  ansible.builtin.command:
-    cmd: tunzip gradle-7.5-all.zip
-    chdir: /usr/gradle
-
-- name: Add java to PATH
-  become_user: user
-  ansible.builtin.blockinfile:
-    dest: ~/.bashrc
+    dest: /lib/systemd/system/java-hello-app.service
     block: |
-      export JAVA_HOME=/usr/java/jdk1.8.0_202
-      export PATH=$PATH:$JAVA_HOME/bin:/usr/gradle/gradle-7.5/bin
+      [Unit]
+      Description=Java hello app
 
-- name: mod user for app.
-  ansible.builtin.command:
-    chdir: "{{ go_app_location }}"
-    shell: source "~/.bashrc" &&  sudo chown -R user:user java-api/
+      [Service]
+      Restart=on-failure
+      ExecStart=java -jar {{ go_app_location }}/app.jar
+      User=nobody
+      Group=nogroup
 
-- name: run app
-  ansible.builtin.command:
-    shell: source "~/.bashrc" && /usr/local/java-api/app$ gradle build
+      [Install]
+      WantedBy=multi-user.target
+    insertafter: EOF
+    create: yes
 
-- name: run app
-  ansible.builtin.command:
-    shell: source "~/.bashrc" && /usr/local/java-api/app$ gradle run
-    
+- name: daemon-reload 
+  command: systemctl daemon-reload
 
-
+- name: enable myapp on start up
+  command: systemctl enable java-hello-app

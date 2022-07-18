@@ -1,0 +1,28 @@
+---
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: "/usr/java"
+    state: directory
+    mode: '0755'
+
+- name: Download jre
+  ansible.builtin.get_url:
+    url: https://nexusrm.easlab.co.uk/repository/eas-hosted-bin/jre-8u333-linux-x64.rpm
+    dest: /usr/java/jre-8u333-linux-x64.rpm 
+    mode: '0777'
+
+- name: rpm
+  ansible.builtin.command:
+    cmd: rpm -ivh jre-8u333-linux-x64.rpm
+    chdir: /usr/java
+
+
+# do i need ?
+- name: Add java to PATH
+  become_user: user
+  ansible.builtin.blockinfile:
+    dest: ~/.bashrc
+    block: |
+      export JAVA_HOME=/usr/java/jdk1.8.0_202
+      export PATH=$PATH:$JAVA_HOME/bin:/usr/gradle/gradle-7.5/bin
+
