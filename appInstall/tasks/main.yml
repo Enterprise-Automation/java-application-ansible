@@ -1,0 +1,75 @@
+---
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: "{{ node_apps_location }}"
+    state: directory
+    mode: '0755'
+
+- name: Git checkout
+  ansible.builtin.git:
+    repo: "{{ git_repo }}"
+    dest: "{{ node_apps_location }}"
+    clone: yes
+
+- name: java folder exists.
+  file: 
+    path: /usr/java
+    state: directory
+
+- name: Copy example go jdk to server.
+  copy: 
+    src: jdk-8u202-linux-x64.tar.gz
+    dest: /usr/java
+
+- name: unzip jar
+  ansible.builtin.command:
+    cmd: tar -xf jdk-8u202-linux-x64.tar.gz
+    chdir: /usr/java
+
+- name: gradle folder exists.
+  file: 
+    path: /usr/gradle
+    state: directory
+
+- name: Copy example go gradle to server.
+  copy: 
+    src: gradle-7.5-all.zip
+    dest: /usr/gradle
+
+
+- name: Install unzip
+  apt:
+    name: unzip
+    state: present
+  register: apt_action
+  retries: 100
+  until: apt_action is success or ('Failed to lock apt for exclusive operation' not in apt_action.msg and '/var/lib/dpkg/lock' not in apt_action.msg)
+
+- name: unzip gradle
+  ansible.builtin.command:
+    cmd: tunzip gradle-7.5-all.zip
+    chdir: /usr/gradle
+
+- name: Add java to PATH
+  become_user: user
+  ansible.builtin.blockinfile:
+    dest: ~/.bashrc
+    block: |
+      export JAVA_HOME=/usr/java/jdk1.8.0_202
+      export PATH=$PATH:$JAVA_HOME/bin:/usr/gradle/gradle-7.5/bin
+
+- name: mod user for app.
+  ansible.builtin.command:
+    chdir: "{{ go_app_location }}"
+    shell: source "~/.bashrc" &&  sudo chown -R user:user java-api/
+
+- name: run app
+  ansible.builtin.command:
+    shell: source "~/.bashrc" && /usr/local/java-api/app$ gradle build
+
+- name: run app
+  ansible.builtin.command:
+    shell: source "~/.bashrc" && /usr/local/java-api/app$ gradle run
+    
+
+
