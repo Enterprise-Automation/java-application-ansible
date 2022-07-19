@@ -1,3 +1,5 @@
 all:
-  vm:
-    192.168.4.3
+  children:
+    vm:
+      hosts:
+        192.168.4.3

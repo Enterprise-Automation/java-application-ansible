@@ -15,7 +15,7 @@
 - name: unzip jar
   ansible.builtin.command:
     cmd: tar -xf example-jar.tar.gz
-    chdir: {{ go_app_location }}
+    chdir: "{{ go_app_location }}"
     mode: '0777'
 
 - name: make java-hello-app.service
