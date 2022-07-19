@@ -10,11 +10,12 @@
     url: https://nexusrm.easlab.co.uk/repository/eas-hosted-bin/jre-8u333-linux-x64.rpm
     dest: /usr/java/jre-8u333-linux-x64.rpm 
     mode: '0777'
-
-- name: rpm
-  ansible.builtin.command:
-    cmd: rpm -ivh jre-8u333-linux-x64.rpm
-    chdir: /usr/java
+    validate_certs: no
+    
+#- name: rpm
+ # ansible.builtin.command:
+ #   cmd: rpm -ivh jre-8u333-linux-x64.rpm
+  #  chdir: /usr/java
 
 
 # do i need ?

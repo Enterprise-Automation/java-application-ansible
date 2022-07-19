@@ -1,22 +1,26 @@
 ---
-
 - name: Create a directory if it does not exist
   ansible.builtin.file:
-    path: "{{ go_app_location }}"
+    path: "{{ apps_location }}"
     state: directory
     mode: '0755'
 
-- name: Download jre
-  ansible.builtin.get_url:
-    url: https://nexusrm.easlab.co.uk/repository/eas-hosted-bin/example-jar.tar.gz
-    dest: "{{ go_app_location }}/example-jar.tar.gz"
-    mode: '0777'
+- name: Install unzip
+  apt:
+    name: unzip
+    state: present
+  register: apt_action
+  retries: 100
+  until: apt_action is success or ('Failed to lock apt for exclusive operation' not in apt_action.msg and '/var/lib/dpkg/lock' not in apt_action.msg)
+
 
 - name: unzip jar
-  ansible.builtin.command:
-    cmd: tar -xf example-jar.tar.gz
-    chdir: "{{ go_app_location }}"
-    mode: '0777'
+  ansible.builtin.unarchive:
+    src: https://nexusrm.easlab.co.uk/repository/eas-hosted-bin/example-jar.tar.gz
+    dest: "/usr/local/java-api/"
+    remote_src: yes
+    validate_certs: no
+
 
 - name: make java-hello-app.service
   blockinfile:
