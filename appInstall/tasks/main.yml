@@ -5,22 +5,13 @@
     state: directory
     mode: '0755'
 
-- name: Install unzip
-  apt:
-    name: unzip
-    state: present
-  register: apt_action
-  retries: 100
-  until: apt_action is success or ('Failed to lock apt for exclusive operation' not in apt_action.msg and '/var/lib/dpkg/lock' not in apt_action.msg)
 
-
-- name: unzip jar
-  ansible.builtin.unarchive:
-    src: https://nexusrm.easlab.co.uk/repository/eas-hosted-bin/example-jar.tar.gz
-    dest: "/usr/local/java-api/"
-    remote_src: yes
+- name: Download app.jar 
+  ansible.builtin.get_url:
+    url: https://nexusrm.easlab.co.uk/repository/eas-hosted-bin/server.jar
+    dest: "{{ apps_location }}/server.jar"
+    mode: '0777'
     validate_certs: no
-
 
 - name: make java-hello-app.service
   blockinfile:
@@ -31,9 +22,10 @@
       Description=Java hello app
 
       [Service]
+      After=network.target
       Restart=on-failure
-      ExecStart=java -jar {{ go_app_location }}/app.jar
-      User=nobody
+      ExecStart=java -Xmx1024M -Xms1024M -jar {{ apps_location }}/server.jar nogui
+      User=root
       Group=nogroup
 
       [Install]

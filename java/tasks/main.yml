@@ -7,23 +7,13 @@
 
 - name: Download jre
   ansible.builtin.get_url:
-    url: https://nexusrm.easlab.co.uk/repository/eas-hosted-bin/jre-8u333-linux-x64.rpm
-    dest: /usr/java/jre-8u333-linux-x64.rpm 
+    url: https://nexusrm.easlab.co.uk/repository/eas-hosted-bin/jdk-18_linux-x64_bin.rpm
+    dest: /usr/java/jdk-18_linux-x64_bin.rpm
     mode: '0777'
     validate_certs: no
     
-#- name: rpm
- # ansible.builtin.command:
- #   cmd: rpm -ivh jre-8u333-linux-x64.rpm
-  #  chdir: /usr/java
-
-
-# do i need ?
-- name: Add java to PATH
-  become_user: user
-  ansible.builtin.blockinfile:
-    dest: ~/.bashrc
-    block: |
-      export JAVA_HOME=/usr/java/jdk1.8.0_202
-      export PATH=$PATH:$JAVA_HOME/bin:/usr/gradle/gradle-7.5/bin
+- name: rpm
+  ansible.builtin.command:
+    cmd: rpm -ivh jdk-18_linux-x64_bin.rpm
+    chdir: /usr/java
 
